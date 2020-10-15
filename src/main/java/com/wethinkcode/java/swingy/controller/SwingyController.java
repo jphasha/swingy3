@@ -6,6 +6,9 @@ import java.util.Scanner;
 
 import javax.swing.JOptionPane;
 
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+
 import com.wethinkcode.java.swingy.helperClasses.CustomException;
 import com.wethinkcode.java.swingy.helperClasses.Persistence;
 import com.wethinkcode.java.swingy.model.enemies.Enemy;
@@ -48,6 +51,7 @@ public class SwingyController {
     // console
     public void cliGamePlay() {
         cliStart();
+        cliDispMap();
     }
 
     public void cliStart() {
@@ -176,9 +180,36 @@ public class SwingyController {
         _hero = heroTypeInstances[option - 1];
     }
 
+    public void cliDispMap() {
+        mapSize = getMapSize(_hero.getHeroLevel());
+        System.out.println("\n===========================================================\n");
+        System.out.println(_hero.heroStats());
+        for(int y = 0; y < mapSize; y++) {
+            for(int x = 0; x < mapSize; x++) {
+                if (x == _hero.getXCoord() && y == _hero.getYCoord()) {
+                    System.out.print(" H ");
+                } else if (x == _enemy.getXCoord() && y == _enemy.getYCoord()) {
+                    System.out.print(" E ");  
+                } else {
+                    System.out.print(" . ");
+                }
+            }
+            System.out.println();
+        }
+        System.out.println("\n===========================================================\n");
+    }
+
     // gui
     public void guiGamePlay() {
         guiStart();
+        guiDispMap();
+        guiView.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                System.out.println("WindowClosingDemo.windowClosing");
+                System.exit(0);
+            }
+        });
     }
 
     public void guiStart() {
@@ -218,7 +249,6 @@ public class SwingyController {
         if (heroName.trim().isEmpty() || heroName.equals(null)) {
             guiCreateCustomHero();
         }
-        System.out.println("hero: " + heroName);
         Hero[] heroInstances = {new Aesir(heroName), new Olympian(heroName), new Westerosi(heroName)};
         String[] heroTypes = {"Aesir", "Olympian", "Westerosi"};
         _hero = heroInstances[JOptionPane.showOptionDialog(null, "Select Hero Type", "Hero Type", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null, heroTypes, heroTypes[0])];
@@ -239,6 +269,17 @@ public class SwingyController {
         String[] heroTypeSelection = heroTypeOptions[type];
         Hero[] heroType = heroTypeInstances[type];
         _hero = heroType[JOptionPane.showOptionDialog(null, "Select Default Hero", "Default Hero", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null, heroTypeSelection, heroTypeSelection[0])];
+    }
+
+    public void guiDispMap() {
+        guiView.createGameWindow();
+        guiView.createPanels();
+        guiView.createButtons();
+        guiView.defineStatsPanel();
+        guiView.populateHeroStats(_hero);
+        guiView.guiDrawMap(mapSize, _hero, _enemy);
+        guiView.populatePanels();
+        guiView.toggleGuiView("On");
     }
 
     // general
