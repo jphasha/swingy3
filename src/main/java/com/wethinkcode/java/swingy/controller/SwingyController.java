@@ -109,7 +109,8 @@ public class SwingyController {
                 try {
                     _enemy = pers.buildPersistedEnemy();
                 } catch (CustomException e) {
-                    System.out.println("Empty Map");
+                    cliCreateHero();
+                    putModelsOnMap();
                 }
             }
         } catch (CustomException e) {
@@ -271,7 +272,8 @@ public class SwingyController {
                 try {
                     _enemy = pers.buildPersistedEnemy();
                 } catch (CustomException e) {
-                    System.out.println("Empty Map");
+                    guiCreateHero();
+                    putModelsOnMap();
                 }
             }
         } catch (CustomException e) {
