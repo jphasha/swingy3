@@ -6,7 +6,6 @@ public class CliView {
         System.out.println("\n==============================================\n");
         System.out.println("Thank you for playing. Good Bye");
         System.out.println("\n==============================================\n");
-        System.exit(0);
     }
 
     public void invalidOption() {
@@ -55,6 +54,20 @@ public class CliView {
         System.out.println("\n==============================================\n");
         System.out.println("PLEASE SELECT A DEFAULT CHARACTER:");
         System.out.println("1.SER DUNCAN\n2.WUN WUN\n3.BALERION\n4.EXIT");
+        System.out.println("\n==============================================\n");
+    }
+
+    public void moveHero() {
+        System.out.println("\n==============================================\n");
+        System.out.println("MOVE HERO:");
+        System.out.println("1.NORTH\n2.EAST\n3.SOUTH\n4.WEST\n5.GUI\n6.EXIT");
+        System.out.println("\n==============================================\n");
+    }
+
+    public void missionComplete() {
+        System.out.println("\n==============================================\n");
+        System.out.println("MISSION COMPLETE");
+        System.out.println("Congradulations!! You have successfully completed the mission!");
         System.out.println("\n==============================================\n");
     }
 }

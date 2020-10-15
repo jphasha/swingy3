@@ -52,10 +52,54 @@ public class SwingyController {
     public void cliGamePlay() {
         cliStart();
         cliDispMap();
+        cliMoveHero();
+    }
+
+    public void cliMoveHero() {
+        cliView.moveHero();
+        Scanner input = new Scanner(System.in);
+        int choice = Integer.parseInt(input.nextLine());
+        int heroDirs[] = {_hero.getYCoord() - 1, _hero.getXCoord() + 1, _hero.getYCoord() + 1, _hero.getXCoord() - 1};
+        String NSEW[] = {"NORTH", "EAST", "SOUTH", "WEST"};
+        if (choice == 1 || choice == 2 || choice == 3 || choice == 4) {
+            cliProcessDirectionsInput(heroDirs, NSEW, choice);
+        } else if (choice == 5) {
+            System.out.println("Gui");
+        } else if (choice == 6) {
+            cliView.exitGame();
+            cliExitGame();
+        } else {
+            cliView.invalidOption();
+            cliDispMap();
+        }
+        cliMoveHero();
+    }
+
+    public void cliProcessDirectionsInput(int[] heroDirs, String[] NSEW, int choice) {
+        System.out.println(NSEW[choice - 1]);
+        int heroDir = heroDirs[choice - 1];
+        if (heroDir >= 0 && heroDir < mapSize) {} else {
+            cliView.missionComplete();
+            cliView.exitGame();
+            cliExitGame();
+        }
+    }
+
+    public void cliExitGame() {
+        try {
+            pers.createPersistenceFile("hero");
+            pers.persistModel(pers.collectHeroData(_hero), "hero");
+            if (_enemy.getXCoord() >= 0 || _enemy.getYCoord() >= 0) {
+                pers.createPersistenceFile("enemy");
+                pers.persistModel(pers.collectEnemyData(_enemy), "enemy");
+            }
+        } catch (CustomException e) {
+            System.out.println(e.getMessage());
+        }
+        System.exit(0);
     }
 
     public void cliStart() {
-        System.out.println("CLI");
         try {
             _hero = pers.buildPersistedHero();
             if (_hero.getXCoord() < 0 || _hero.getYCoord() < 0) {
@@ -85,6 +129,7 @@ public class SwingyController {
                 cliCreateDefaultHero();
             } else if (option == 3) {
                 cliView.exitGame();
+                System.exit(0);
             }
         } catch (NumberFormatException e) {
             cliView.invalidOption();
@@ -100,17 +145,18 @@ public class SwingyController {
             if (option == 1) {
                 cliView.aesirOptions();
                 Hero[] aesirInstances = {new Baldur(), new Thor(), new Odin()};
-                instantiateDefaultHero(aesirInstances);
+                cliInstantiateDefaultHero(aesirInstances);
             } else if (option == 2) {
                 cliView.olympianOptions();
                 Hero[] olympianInstances = {new Ares(), new Athena(), new Zeus()};
-                instantiateDefaultHero(olympianInstances);
+                cliInstantiateDefaultHero(olympianInstances);
             } else if (option == 3) {
                 cliView.westerosOptions();
                 Hero[] westerosiInstances = {new SerDuncan(), new WunWun(), new Balerion()};
-                instantiateDefaultHero(westerosiInstances);
+                cliInstantiateDefaultHero(westerosiInstances);
             } else if (option == 4) {
                 cliView.exitGame();
+                System.exit(0);
             } else {
                 cliView.invalidOption();
                 cliCreateDefaultHero();
@@ -121,7 +167,7 @@ public class SwingyController {
         }
     }
 
-    public void instantiateDefaultHero(Hero[] heroInstances) {
+    public void cliInstantiateDefaultHero(Hero[] heroInstances) {
         try {
             int heroOption;
             Scanner option = new Scanner(System.in);
@@ -130,13 +176,14 @@ public class SwingyController {
                 pickDefaultHeroInstance(heroInstances, heroOption);
             } else if (heroOption == 4) {
                 cliView.exitGame();
+                System.exit(0);
             } else {
                 cliView.invalidOption();
-                instantiateDefaultHero(heroInstances);
+                cliInstantiateDefaultHero(heroInstances);
             }
         } catch (NumberFormatException e) {
             cliView.invalidOption();
-            instantiateDefaultHero(heroInstances);
+            cliInstantiateDefaultHero(heroInstances);
         }
     }
 
@@ -150,10 +197,11 @@ public class SwingyController {
             Scanner input = new Scanner(System.in);
             int option = Integer.parseInt(input.nextLine());
             if (option >= 1 && option <= 3) {
-                String heroName = enterHeroName();
-                instantiateCustomHero(heroName, option);
+                String heroName = cliEnterHeroName();
+                cliInstantiateCustomHero(heroName, option);
             } else if (option == 4) {
                 cliView.exitGame();
+                System.exit(0);
              } else {
                 cliView.invalidOption();
                 cliCreateCustomHero();
@@ -164,18 +212,18 @@ public class SwingyController {
         }
     }
 
-    String enterHeroName() {
+    String cliEnterHeroName() {
         cliView.enterHeroName();
         Scanner input = new Scanner(System.in);
         String heroName = input.nextLine();
         if (heroName.trim().isEmpty()) {
             cliView.invalidOption();
-            enterHeroName();
+            cliEnterHeroName();
         }
         return heroName;
     }
 
-    public void instantiateCustomHero(String heroName, int option) {
+    public void cliInstantiateCustomHero(String heroName, int option) {
         Hero[] heroTypeInstances = {new Aesir(heroName), new Olympian(heroName), new Westerosi(heroName)};
         _hero = heroTypeInstances[option - 1];
     }

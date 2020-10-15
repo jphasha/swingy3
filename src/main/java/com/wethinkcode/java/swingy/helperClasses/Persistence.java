@@ -66,8 +66,6 @@ public class Persistence {
             } catch (IOException e) {
                 throw new CustomException("Error", "There was a problem when trying to create a persistance file");
             }
-        } else {
-            System.out.println("Already created");
         }
     }
 
