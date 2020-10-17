@@ -70,4 +70,12 @@ public class CliView {
         System.out.println("Congradulations!! You have successfully completed the mission!");
         System.out.println("\n==============================================\n");
     }
+
+    public void enemyEncounter() {
+        System.out.println("ENEMY ENCOUNTER");
+        System.out.println("\n==============================================\n");
+        System.out.println("YOU HAVE ENCOUNTERED AN ENEMY");
+        System.out.println("1.FIGHT\n2.RUN\n3.EXIT");
+        System.out.println("\n==============================================\n");
+    }
 }

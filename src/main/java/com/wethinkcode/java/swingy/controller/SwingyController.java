@@ -75,13 +75,101 @@ public class SwingyController {
         cliMoveHero();
     }
 
-    public void cliProcessDirectionsInput(int[] heroDirs, String[] NSEW, int choice) {
+    public void cliProcessDirectionsInput(int[] coordChanges, String[] NSEW, int choice) {
         System.out.println(NSEW[choice - 1]);
-        int heroDir = heroDirs[choice - 1];
-        if (heroDir >= 0 && heroDir < mapSize) {} else {
+        int coordChange = coordChanges[choice - 1];
+        if (coordChange >= 0 && coordChange < mapSize) {
+            setCoords(coordChange, choice);
+            cliDispMap();
+        } else {
+            _hero.setXCoord(-1);
+            _hero.setYCoord(-1);
             cliView.missionComplete();
             cliView.exitGame();
             cliExitGame();
+        }
+    }
+
+    public void cliEnemyEncounter() {
+        if ((_hero.getXCoord() == _enemy.getXCoord()) && (_hero.getYCoord() == _enemy.getYCoord())) {
+            cliView.enemyEncounter();
+            try {
+                Scanner option = new Scanner(System.in);
+                int action = Integer.parseInt(option.nextLine());
+                if (action == 1) {
+                    cliFightSimulation();
+                } else if (action == 2) {
+                    cliRunSimulation();
+                } else if (action == 3) {
+                    cliExitGame();
+                } else {
+                    cliView.invalidOption();
+                    cliEnemyEncounter();
+                }
+            } catch (NumberFormatException e) {
+                cliView.invalidOption();
+                cliEnemyEncounter();
+            }
+        }
+    }
+
+    public void cliRunSimulation() {
+        int success = rand.nextInt(10);
+
+        if (success > 5) {
+            System.out.println("COWARD!!");
+            _hero.restorePrePos();
+        } else {
+            System.out.println("SORRY, YOU HAVE TO FIGHT!!!");
+            cliFightSimulation();
+        }
+    }
+
+    public void cliFightSimulation() {
+        int heroHP = _hero.getHeroHitPoints();
+        int enemyHP = _enemy.getHitPoints();
+        int heroAttack = _hero.getHeroAttack();
+        int enemyAttack = _enemy.getAttack();
+        int heroDefence = _hero.getHeroDefense();
+        int enemyDefence = _enemy.getDefense();
+        int fightTurn = rand.nextInt(1);
+        while (heroHP > 0 && enemyHP > 0) {
+            if (heroAttack > enemyDefence && fightTurn == 0) {
+                enemyHP -= heroAttack - enemyDefence;
+            } if (enemyHP <= 0) {
+                System.out.println("Nothing is as beatiful as a dead enemy");
+                _enemy.setXCoord(-1);
+                _enemy.setYCoord(-1);
+                pers.removePersistenceFile("enemy");
+            } else {
+                fightTurn = 1;
+            }
+            if (enemyAttack > heroDefence && fightTurn == 1) {
+                heroHP -= enemyAttack - heroDefence;
+            } if (heroHP <= 0) {
+                System.out.println("The enemy killed you. Mission failed");
+                _hero.setXCoord(-1);
+                _hero.setYCoord(-1);
+                try {
+                    pers.createPersistenceFile("hero");
+                    pers.persistModel(pers.collectHeroData(_hero), "hero");
+                    pers.removePersistenceFile("enemy");
+                } catch (CustomException e) {
+                    System.out.println("Could Not Persist Your Hero");
+                }
+                cliView.exitGame();
+                System.exit(0);
+            } else {
+                fightTurn = 0;
+            }
+        }
+    } 
+
+    public void setCoords(int coordChange, int choice) {
+        if (choice == 1 || choice == 3) {
+            _hero.setYCoord(coordChange);
+        } else if (choice == 2 || choice == 4) {
+            _hero.setXCoord(coordChange);
         }
     }
 
@@ -231,6 +319,7 @@ public class SwingyController {
 
     public void cliDispMap() {
         mapSize = getMapSize(_hero.getHeroLevel());
+        cliEnemyEncounter();
         System.out.println("\n===========================================================\n");
         System.out.println(_hero.heroStats());
         for(int y = 0; y < mapSize; y++) {
@@ -251,11 +340,23 @@ public class SwingyController {
     // gui
     public void guiGamePlay() {
         guiStart();
+        mapSize = getMapSize(_hero.getHeroLevel());
         guiDispMap();
         guiView.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                System.out.println("WindowClosingDemo.windowClosing");
+                try {
+                    pers.createPersistenceFile("hero");
+                    pers.createPersistenceFile("enemy");
+                    pers.persistModel(pers.collectHeroData(_hero), "hero");
+                    if (_enemy.getXCoord() >= 0) {
+                        pers.persistModel(pers.collectEnemyData(_enemy), "enemy");
+                    }
+                } catch (CustomException e1) {
+                    System.out.println("Persistance gone wrong");
+                }
+                guiView.mapCells[_hero.getYCoord()][_hero.getXCoord()].setIcon(null);
+                guiView.mapCells[_enemy.getYCoord()][_enemy.getXCoord()].setIcon(null);
                 System.exit(0);
             }
         });
