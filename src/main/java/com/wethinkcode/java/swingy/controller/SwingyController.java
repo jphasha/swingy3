@@ -6,6 +6,8 @@ import java.util.Scanner;
 
 import javax.swing.JOptionPane;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
@@ -47,6 +49,7 @@ public class SwingyController {
     File enemyPersistenceFile = new File("persistence/enemyPersistenceFile.txt");
     Persistence pers = new Persistence();
     Random rand = new Random();
+    ButtonControl buttonAction = new ButtonControl();
 
     // console
     public void cliGamePlay() {
@@ -56,19 +59,26 @@ public class SwingyController {
     }
 
     public void cliMoveHero() {
-        cliView.moveHero();
-        Scanner input = new Scanner(System.in);
-        int choice = Integer.parseInt(input.nextLine());
-        int heroDirs[] = {_hero.getYCoord() - 1, _hero.getXCoord() + 1, _hero.getYCoord() + 1, _hero.getXCoord() - 1};
-        String NSEW[] = {"NORTH", "EAST", "SOUTH", "WEST"};
-        if (choice == 1 || choice == 2 || choice == 3 || choice == 4) {
-            cliProcessDirectionsInput(heroDirs, NSEW, choice);
-        } else if (choice == 5) {
-            System.out.println("Gui");
-        } else if (choice == 6) {
-            cliView.exitGame();
-            cliExitGame();
-        } else {
+        try {
+            cliView.moveHero();
+            Scanner input = new Scanner(System.in);
+            int choice = Integer.parseInt(input.nextLine());
+            int heroDirs[] = { _hero.getYCoord() - 1, _hero.getXCoord() + 1, _hero.getYCoord() + 1,
+                    _hero.getXCoord() - 1 };
+            String NSEW[] = { "NORTH", "EAST", "SOUTH", "WEST" };
+            if (choice == 1 || choice == 2 || choice == 3 || choice == 4) {
+                cliProcessDirectionsInput(heroDirs, NSEW, choice);
+            } else if (choice == 5) {
+                System.out.println("Gui");
+                guiGamePlay();
+            } else if (choice == 6) {
+                cliView.exitGame();
+                cliExitGame();
+            } else {
+                cliView.invalidOption();
+                cliDispMap();
+            }
+        } catch (NumberFormatException e) {
             cliView.invalidOption();
             cliDispMap();
         }
@@ -110,6 +120,7 @@ public class SwingyController {
                 cliView.invalidOption();
                 cliEnemyEncounter();
             }
+            pers.removePersistenceFile("enemy");
         }
     }
 
@@ -136,7 +147,8 @@ public class SwingyController {
         while (heroHP > 0 && enemyHP > 0) {
             if (heroAttack > enemyDefence && fightTurn == 0) {
                 enemyHP -= heroAttack - enemyDefence;
-            } if (enemyHP <= 0) {
+            }
+            if (enemyHP <= 0) {
                 System.out.println("Nothing is as beatiful as a dead enemy");
                 _enemy.setXCoord(-1);
                 _enemy.setYCoord(-1);
@@ -146,7 +158,8 @@ public class SwingyController {
             }
             if (enemyAttack > heroDefence && fightTurn == 1) {
                 heroHP -= enemyAttack - heroDefence;
-            } if (heroHP <= 0) {
+            }
+            if (heroHP <= 0) {
                 System.out.println("The enemy killed you. Mission failed");
                 _hero.setXCoord(-1);
                 _hero.setYCoord(-1);
@@ -163,7 +176,7 @@ public class SwingyController {
                 fightTurn = 0;
             }
         }
-    } 
+    }
 
     public void setCoords(int coordChange, int choice) {
         if (choice == 1 || choice == 3) {
@@ -233,15 +246,15 @@ public class SwingyController {
             int option = Integer.parseInt(input.nextLine());
             if (option == 1) {
                 cliView.aesirOptions();
-                Hero[] aesirInstances = {new Baldur(), new Thor(), new Odin()};
+                Hero[] aesirInstances = { new Baldur(), new Thor(), new Odin() };
                 cliInstantiateDefaultHero(aesirInstances);
             } else if (option == 2) {
                 cliView.olympianOptions();
-                Hero[] olympianInstances = {new Ares(), new Athena(), new Zeus()};
+                Hero[] olympianInstances = { new Ares(), new Athena(), new Zeus() };
                 cliInstantiateDefaultHero(olympianInstances);
             } else if (option == 3) {
                 cliView.westerosOptions();
-                Hero[] westerosiInstances = {new SerDuncan(), new WunWun(), new Balerion()};
+                Hero[] westerosiInstances = { new SerDuncan(), new WunWun(), new Balerion() };
                 cliInstantiateDefaultHero(westerosiInstances);
             } else if (option == 4) {
                 cliView.exitGame();
@@ -291,7 +304,7 @@ public class SwingyController {
             } else if (option == 4) {
                 cliView.exitGame();
                 System.exit(0);
-             } else {
+            } else {
                 cliView.invalidOption();
                 cliCreateCustomHero();
             }
@@ -313,7 +326,7 @@ public class SwingyController {
     }
 
     public void cliInstantiateCustomHero(String heroName, int option) {
-        Hero[] heroTypeInstances = {new Aesir(heroName), new Olympian(heroName), new Westerosi(heroName)};
+        Hero[] heroTypeInstances = { new Aesir(heroName), new Olympian(heroName), new Westerosi(heroName) };
         _hero = heroTypeInstances[option - 1];
     }
 
@@ -322,12 +335,12 @@ public class SwingyController {
         cliEnemyEncounter();
         System.out.println("\n===========================================================\n");
         System.out.println(_hero.heroStats());
-        for(int y = 0; y < mapSize; y++) {
-            for(int x = 0; x < mapSize; x++) {
+        for (int y = 0; y < mapSize; y++) {
+            for (int x = 0; x < mapSize; x++) {
                 if (x == _hero.getXCoord() && y == _hero.getYCoord()) {
                     System.out.print(" H ");
                 } else if (x == _enemy.getXCoord() && y == _enemy.getYCoord()) {
-                    System.out.print(" E ");  
+                    System.out.print(" E ");
                 } else {
                     System.out.print(" . ");
                 }
@@ -384,8 +397,9 @@ public class SwingyController {
     }
 
     public void guiCreateHero() {
-        String[] modes = {"Custom", "Default"};
-        int mode = JOptionPane.showOptionDialog(null, "Create a Custom Hero or Choose from the Default Heroes", "Hero Mode", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null, modes, modes[0]);
+        String[] modes = { "Custom", "Default" };
+        int mode = JOptionPane.showOptionDialog(null, "Create a Custom Hero or Choose from the Default Heroes",
+                "Hero Mode", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null, modes, modes[0]);
         if (mode == 0) {
             guiCreateCustomHero();
         } else if (mode == 1) {
@@ -400,26 +414,30 @@ public class SwingyController {
         if (heroName.trim().isEmpty() || heroName.equals(null)) {
             guiCreateCustomHero();
         }
-        Hero[] heroInstances = {new Aesir(heroName), new Olympian(heroName), new Westerosi(heroName)};
-        String[] heroTypes = {"Aesir", "Olympian", "Westerosi"};
-        _hero = heroInstances[JOptionPane.showOptionDialog(null, "Select Hero Type", "Hero Type", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null, heroTypes, heroTypes[0])];
+        Hero[] heroInstances = { new Aesir(heroName), new Olympian(heroName), new Westerosi(heroName) };
+        String[] heroTypes = { "Aesir", "Olympian", "Westerosi" };
+        _hero = heroInstances[JOptionPane.showOptionDialog(null, "Select Hero Type", "Hero Type",
+                JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null, heroTypes, heroTypes[0])];
     }
 
     public void guiCreateDefaultHero() {
-        String[] heroTypes = {"Aesir", "Olympian", "Westerosi"};
-        String[] aesir = {"Baldur", "Thor", "Odin"};
-        Aesir[] aesirInstances = {new Baldur(), new Thor(), new Odin()};
-        String[] olympians = {"Ares", "Athena", "Zeus"};
-        Olympian[] olympianInstances = {new Ares(), new Athena(), new Zeus()};
-        String[] westerosi = {"SerDuncan", "WunWun", "Balerion"};
-        Westerosi[] westerosiInstances = {new SerDuncan(), new WunWun(), new Balerion()};
-        Hero[][] heroTypeInstances = {aesirInstances, olympianInstances, westerosiInstances};
-        String[][] heroTypeOptions = {aesir, olympians, westerosi};
+        String[] heroTypes = { "Aesir", "Olympian", "Westerosi" };
+        String[] aesir = { "Baldur", "Thor", "Odin" };
+        Aesir[] aesirInstances = { new Baldur(), new Thor(), new Odin() };
+        String[] olympians = { "Ares", "Athena", "Zeus" };
+        Olympian[] olympianInstances = { new Ares(), new Athena(), new Zeus() };
+        String[] westerosi = { "SerDuncan", "WunWun", "Balerion" };
+        Westerosi[] westerosiInstances = { new SerDuncan(), new WunWun(), new Balerion() };
+        Hero[][] heroTypeInstances = { aesirInstances, olympianInstances, westerosiInstances };
+        String[][] heroTypeOptions = { aesir, olympians, westerosi };
 
-        int type = JOptionPane.showOptionDialog(null, "Select Hero Type", "Hero Type", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null, heroTypes, heroTypes[0]);
+        int type = JOptionPane.showOptionDialog(null, "Select Hero Type", "Hero Type", JOptionPane.DEFAULT_OPTION,
+                JOptionPane.INFORMATION_MESSAGE, null, heroTypes, heroTypes[0]);
         String[] heroTypeSelection = heroTypeOptions[type];
         Hero[] heroType = heroTypeInstances[type];
-        _hero = heroType[JOptionPane.showOptionDialog(null, "Select Default Hero", "Default Hero", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null, heroTypeSelection, heroTypeSelection[0])];
+        _hero = heroType[JOptionPane.showOptionDialog(null, "Select Default Hero", "Default Hero",
+                JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null, heroTypeSelection,
+                heroTypeSelection[0])];
     }
 
     public void guiDispMap() {
@@ -430,14 +448,101 @@ public class SwingyController {
         guiView.populateHeroStats(_hero);
         guiView.guiDrawMap(mapSize, _hero, _enemy);
         guiView.populatePanels();
+        activateButtons();
+        guiView.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                try {
+                    pers.createPersistenceFile("hero");
+                    pers.createPersistenceFile("enemy");
+                    pers.persistModel(pers.collectHeroData(_hero), "hero");
+                    pers.persistModel(pers.collectEnemyData(_enemy), "enemy");
+                } catch (CustomException e1) {
+                    System.out.println("persistence gone wrong");
+                }
+                System.exit(0);
+            }
+        });
         guiView.toggleGuiView("On");
+    }
+
+    public Enemy generateEnemy() {
+        Enemy[] enemies = { new IceSpider(), new TheOther(), new WhiteWalker(), new Jormungandr(), new Loki(),
+                new Surtur(), new Atlas(), new Kronos(), new Oranos() };
+        Enemy enemy = enemies[rand.nextInt(8)];
+        return enemy;
+    }
+
+    public void guiMoveNorth() {
+        if (_hero.getYCoord() > 0) {
+            guiView.mapCells[_hero.getYCoord()][_hero.getXCoord()].setIcon(null);
+            guiView.mapCells[_hero.getYCoord() - 1][_hero.getXCoord()].setIcon(_hero.getImageIcon());
+            _hero.setYCoord(_hero.getYCoord() - 1);
+        } else {
+            guiMissionComplete();
+        }
+    }
+
+    public void guiMoveSouth() {
+        if (_hero.getYCoord() < mapSize - 1) {
+            guiView.mapCells[_hero.getYCoord()][_hero.getXCoord()].setIcon(null);
+            guiView.mapCells[_hero.getYCoord() + 1][_hero.getXCoord()].setIcon(_hero.getImageIcon());
+            _hero.setYCoord(_hero.getYCoord() + 1);
+        } else {
+            guiMissionComplete();
+        }
+    }
+
+    public void guiMoveWest() {
+        if (_hero.getXCoord() > 0) {
+            guiView.mapCells[_hero.getYCoord()][_hero.getXCoord()].setIcon(null);
+            guiView.mapCells[_hero.getYCoord()][_hero.getXCoord() - 1].setIcon(_hero.getImageIcon());
+            _hero.setXCoord(_hero.getXCoord() - 1);
+        } else {
+            guiMissionComplete();
+        }
+    }
+
+    public void guiMoveEast() {
+        if (_hero.getXCoord() < mapSize - 1) {
+            guiView.mapCells[_hero.getYCoord()][_hero.getXCoord()].setIcon(null);
+            guiView.mapCells[_hero.getYCoord()][_hero.getXCoord() + 1].setIcon(_hero.getImageIcon());
+            _hero.setXCoord(_hero.getXCoord() + 1);
+        } else {
+            guiMissionComplete();
+        }
+    }
+
+    public void guiMissionComplete() {
+        guiView.mapCells[_hero.getYCoord()][_hero.getXCoord()].setIcon(null);
+        _hero.setXCoord(-1);
+        _hero.setYCoord(-1);
+        try {
+            pers.createPersistenceFile("hero");
+            pers.persistModel(pers.collectHeroData(_hero), "hero");
+            pers.removePersistenceFile("enemy");
+        } catch (CustomException e) {
+            System.out.println("Hero not persisited");
+        }
+        JOptionPane.showMessageDialog(null, "CONGRADULATIONS!!!, YOU HAVE SUCCESSFULLY COMPLETED THE MISSION.", "MISSION COMPLETE!!", JOptionPane.PLAIN_MESSAGE);
+        guiView.toggleGuiView("Off");
+        System.exit(0);
+    }
+
+    public void activateButtons() {
+        guiView.northButton.addActionListener(buttonAction);
+        guiView.southButton.addActionListener(buttonAction);
+        guiView.eastButton.addActionListener(buttonAction);
+        guiView.westButton.addActionListener(buttonAction);
+        guiView.cliButton.addActionListener(buttonAction);
+        guiView.newGameButton.addActionListener(buttonAction);
     }
 
     // general
     public void putModelsOnMap() {
         mapSize = getMapSize(_hero.getHeroLevel());
-        _hero.setXCoord(mapSize/2);
-        _hero.setYCoord(mapSize/2);
+        _hero.setXCoord(mapSize / 2);
+        _hero.setYCoord(mapSize / 2);
         _enemy = generateEnemy();
         _enemy.setXCoord(rand.nextInt(mapSize));
         _enemy.setYCoord(rand.nextInt(mapSize));
@@ -447,11 +552,25 @@ public class SwingyController {
         return (level - 1) * 5 + 10 - (level % 2);
     }
 
-    public Enemy generateEnemy() {
-        Enemy[] enemies = {new IceSpider(), new TheOther(), new WhiteWalker(),
-                            new Jormungandr(), new Loki(), new Surtur(),
-                            new Atlas(), new Kronos(), new Oranos()};
-        Enemy enemy = enemies[rand.nextInt(8)];
-        return enemy;
+    public class ButtonControl implements ActionListener {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (e.getActionCommand() == "North") {
+                guiMoveNorth();
+            } else if (e.getActionCommand() == "South") {
+                guiMoveSouth();
+            } else if (e.getActionCommand() == "East") {
+                guiMoveEast();
+            } else if (e.getActionCommand() == "West") {
+                guiMoveWest();
+            } else if (e.getActionCommand() == "Console") {
+                guiView.toggleGuiView("Off");
+                cliGamePlay();
+            } else if (e.getActionCommand() == "New Game") {
+                pers.removePersistenceFile("enemy");
+                guiGamePlay();
+            }
+        }
     }
 }
