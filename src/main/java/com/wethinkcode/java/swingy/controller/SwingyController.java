@@ -42,8 +42,8 @@ import com.wethinkcode.java.swingy.view.gui.GuiView;
 public class SwingyController {
     GuiView guiView = new GuiView();
     CliView cliView = new CliView();
-    static Hero _hero;
-    static Enemy _enemy;
+    Hero _hero;
+    Enemy _enemy;
     int mapSize;
     File heroPersistenceFile = new File("persistence/heroPersistenceFile.txt");
     File enemyPersistenceFile = new File("persistence/enemyPersistenceFile.txt");
@@ -69,7 +69,15 @@ public class SwingyController {
             if (choice == 1 || choice == 2 || choice == 3 || choice == 4) {
                 cliProcessDirectionsInput(heroDirs, NSEW, choice);
             } else if (choice == 5) {
-                System.out.println("Gui");
+                pers.removePersistenceFile("enemy");
+                try {
+                    pers.createPersistenceFile("hero");
+                    pers.createPersistenceFile("enemy");
+                    pers.persistModel(pers.collectHeroData(_hero), "hero");
+                    pers.persistModel(pers.collectEnemyData(_enemy), "enemy");
+                } catch (CustomException e1) {
+                    System.out.println("persistance Issues");
+                }
                 guiGamePlay();
             } else if (choice == 6) {
                 cliView.exitGame();
@@ -355,24 +363,7 @@ public class SwingyController {
         guiStart();
         mapSize = getMapSize(_hero.getHeroLevel());
         guiDispMap();
-        guiView.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent e) {
-                try {
-                    pers.createPersistenceFile("hero");
-                    pers.createPersistenceFile("enemy");
-                    pers.persistModel(pers.collectHeroData(_hero), "hero");
-                    if (_enemy.getXCoord() >= 0) {
-                        pers.persistModel(pers.collectEnemyData(_enemy), "enemy");
-                    }
-                } catch (CustomException e1) {
-                    System.out.println("Persistance gone wrong");
-                }
-                guiView.mapCells[_hero.getYCoord()][_hero.getXCoord()].setIcon(null);
-                guiView.mapCells[_enemy.getYCoord()][_enemy.getXCoord()].setIcon(null);
-                System.exit(0);
-            }
-        });
+        while (true) {}
     }
 
     public void guiStart() {
@@ -456,14 +447,19 @@ public class SwingyController {
                     pers.createPersistenceFile("hero");
                     pers.createPersistenceFile("enemy");
                     pers.persistModel(pers.collectHeroData(_hero), "hero");
-                    pers.persistModel(pers.collectEnemyData(_enemy), "enemy");
+                    if (_enemy.getXCoord() >= 0) {
+                        pers.persistModel(pers.collectEnemyData(_enemy), "enemy");
+                    }
                 } catch (CustomException e1) {
-                    System.out.println("persistence gone wrong");
+                    System.out.println("Persistance gone wrong");
                 }
+                guiView.mapCells[_hero.getYCoord()][_hero.getXCoord()].setIcon(null);
+                guiView.mapCells[_enemy.getYCoord()][_enemy.getXCoord()].setIcon(null);
                 System.exit(0);
             }
         });
         guiView.toggleGuiView("On");
+        guiEnemyEncounter();
     }
 
     public Enemy generateEnemy() {
@@ -478,6 +474,7 @@ public class SwingyController {
             guiView.mapCells[_hero.getYCoord()][_hero.getXCoord()].setIcon(null);
             guiView.mapCells[_hero.getYCoord() - 1][_hero.getXCoord()].setIcon(_hero.getImageIcon());
             _hero.setYCoord(_hero.getYCoord() - 1);
+            guiEnemyEncounter();
         } else {
             guiMissionComplete();
         }
@@ -488,6 +485,7 @@ public class SwingyController {
             guiView.mapCells[_hero.getYCoord()][_hero.getXCoord()].setIcon(null);
             guiView.mapCells[_hero.getYCoord() + 1][_hero.getXCoord()].setIcon(_hero.getImageIcon());
             _hero.setYCoord(_hero.getYCoord() + 1);
+            guiEnemyEncounter();
         } else {
             guiMissionComplete();
         }
@@ -498,6 +496,7 @@ public class SwingyController {
             guiView.mapCells[_hero.getYCoord()][_hero.getXCoord()].setIcon(null);
             guiView.mapCells[_hero.getYCoord()][_hero.getXCoord() - 1].setIcon(_hero.getImageIcon());
             _hero.setXCoord(_hero.getXCoord() - 1);
+            guiEnemyEncounter();
         } else {
             guiMissionComplete();
         }
@@ -508,6 +507,7 @@ public class SwingyController {
             guiView.mapCells[_hero.getYCoord()][_hero.getXCoord()].setIcon(null);
             guiView.mapCells[_hero.getYCoord()][_hero.getXCoord() + 1].setIcon(_hero.getImageIcon());
             _hero.setXCoord(_hero.getXCoord() + 1);
+            guiEnemyEncounter();
         } else {
             guiMissionComplete();
         }
@@ -538,6 +538,70 @@ public class SwingyController {
         guiView.newGameButton.addActionListener(buttonAction);
     }
 
+    public void guiEnemyEncounter() {
+        String[] choices = { "Fight", "Run" };
+        int choice;
+        if (_hero.getXCoord() == _enemy.getXCoord() && _hero.getYCoord() == _enemy.getYCoord()) {
+            choice = JOptionPane.showInternalOptionDialog(null, "You have encountered an enemy, what will you do?",
+            "Enemy encounter", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null,
+            choices, choices[1]);
+            if (choice == 0) {
+                guiFight();
+            } else if (choice == 1) {
+                guiRunAway();
+            } else {
+                System.out.println("You have to make a choice");
+                guiEnemyEncounter();
+            }
+        }
+        // System.out.println("Hero X: " + _hero.getXCoord());
+        // System.out.println("Hero Y: " + _hero.getYCoord());
+        // System.out.println("Enemy X: " + _enemy.getXCoord());
+        // System.out.println("Enemy Y: " + _enemy.getYCoord());
+    }
+
+    public void guiFight() {
+        int heroHP = _hero.getHeroHitPoints();
+        int enemyHP = _enemy.getHitPoints();
+        int heroAttack = _hero.getHeroAttack();
+        int enemyAttack = _enemy.getAttack();
+        int heroDefence = _hero.getHeroDefense();
+        int enemyDefence = _enemy.getDefense();
+        int fightTurn = 0;
+        while (heroHP > 0 && enemyHP > 0) {
+            if (heroAttack > enemyDefence && fightTurn == 0) {
+                enemyHP -= heroAttack - enemyDefence;
+            } if (enemyHP <= 0) {
+                System.out.println("Nothing is as beatiful as a dead enemy");
+                _enemy.setXCoord(-1);
+                _enemy.setYCoord(-1);
+                JOptionPane.showMessageDialog(null, "The enemy is Dead, Proceed with the Game", "SUCCESS", JOptionPane.PLAIN_MESSAGE);
+                guiView.mapCells[_hero.getYCoord()][_hero.getXCoord()].setIcon(_hero.getImageIcon());
+            } else {
+                fightTurn = 1;
+            }
+            if (enemyAttack > heroDefence && fightTurn == 1) {
+                heroHP -= enemyAttack - heroDefence;
+            } if (heroHP <= 0) {
+                System.out.println("The enemy killed you. Mission failed");
+                _hero.setXCoord(-1);
+                _hero.setYCoord(-1);
+                guiView.mapCells[_enemy.getYCoord()][_enemy.getXCoord()].setIcon(_enemy.getImage());
+                JOptionPane.showMessageDialog(null, "The enemy has killed you, Mission Failed!!", "FAILURE", JOptionPane.PLAIN_MESSAGE);
+                guiView.toggleGuiView("Off");
+                System.exit(0);
+            } else {
+                fightTurn = 0;
+            }
+        }
+    }
+
+    public void guiRunAway() {
+        _hero.restorePrePos();
+        guiView.mapCells[_hero.getYCoord()][_hero.getXCoord()].setIcon(_hero.getImageIcon());
+        guiView.mapCells[_enemy.getYCoord()][_enemy.getXCoord()].setIcon(_enemy.getImage());
+    }
+
     // general
     public void putModelsOnMap() {
         mapSize = getMapSize(_hero.getHeroLevel());
@@ -566,9 +630,19 @@ public class SwingyController {
                 guiMoveWest();
             } else if (e.getActionCommand() == "Console") {
                 guiView.toggleGuiView("Off");
+                try {
+                    pers.removePersistenceFile("enemy");
+                    pers.createPersistenceFile("hero");
+                    pers.createPersistenceFile("enemy");
+                    pers.persistModel(pers.collectHeroData(_hero), "hero");
+                    pers.persistModel(pers.collectEnemyData(_enemy), "enemy");
+                } catch (CustomException e1) {
+                    System.out.println("Could not persist model");
+                }
                 cliGamePlay();
             } else if (e.getActionCommand() == "New Game") {
                 pers.removePersistenceFile("enemy");
+                guiView.toggleGuiView("Off");
                 guiGamePlay();
             }
         }
