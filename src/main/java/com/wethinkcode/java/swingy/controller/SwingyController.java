@@ -3,8 +3,14 @@ package com.wethinkcode.java.swingy.controller;
 import java.io.File;
 import java.util.Random;
 import java.util.Scanner;
+import java.util.Set;
 
 import javax.swing.JOptionPane;
+import javax.validation.ConstraintViolation;
+import javax.validation.Validator;
+import javax.validation.ValidatorFactory;
+import javax.validation.Validation;
+import javax.validation.ValidationException;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -50,6 +56,7 @@ public class SwingyController {
     Persistence pers = new Persistence();
     Random rand = new Random();
     ButtonControl buttonAction = new ButtonControl();
+    static Validator validator;
 
     // console
     public void cliGamePlay() {
@@ -330,6 +337,10 @@ public class SwingyController {
             cliView.invalidOption();
             cliEnterHeroName();
         }
+        if (heroName.equals(null) || heroName.equals("null")) {
+            cliView.invalidOption();
+            cliEnterHeroName();
+        }
         return heroName;
     }
 
@@ -401,14 +412,29 @@ public class SwingyController {
     }
 
     public void guiCreateCustomHero() {
-        String heroName = JOptionPane.showInputDialog("Enter Hero Name");
-        if (heroName.trim().isEmpty() || heroName.equals(null)) {
-            guiCreateCustomHero();
+        try {
+            setUpValidator();
+            String heroName = JOptionPane.showInputDialog("Enter Hero Name");
+            if (heroName.trim().isEmpty() || heroName.equals(null)) {
+                System.out.println("Hero name cannot be an empty value");
+                guiCreateCustomHero();
+            }
+            Hero[] heroInstances = { new Aesir(heroName), new Olympian(heroName), new Westerosi(heroName) };
+            String[] heroTypes = { "Aesir", "Olympian", "Westerosi" };
+            _hero = heroInstances[JOptionPane.showOptionDialog(null, "Select Hero Type", "Hero Type",
+                    JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null, heroTypes, heroTypes[0])];
+            Set<ConstraintViolation<Hero>> heroErrors = validateHeroCredentials(_hero);
+            if (heroErrors.size() > 0) {
+                StringBuilder errors = new StringBuilder();
+                for (ConstraintViolation<Hero> constraintViolation : heroErrors) {
+                    errors.append(constraintViolation + "\n");
+                }
+                JOptionPane.showMessageDialog(null, errors, "ERROR!!", JOptionPane.PLAIN_MESSAGE);
+            }
+        } catch (ValidationException e) {
+            // System.out.println(e.)
+            System.out.println(e.getMessage());
         }
-        Hero[] heroInstances = { new Aesir(heroName), new Olympian(heroName), new Westerosi(heroName) };
-        String[] heroTypes = { "Aesir", "Olympian", "Westerosi" };
-        _hero = heroInstances[JOptionPane.showOptionDialog(null, "Select Hero Type", "Hero Type",
-                JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null, heroTypes, heroTypes[0])];
     }
 
     public void guiCreateDefaultHero() {
@@ -453,8 +479,6 @@ public class SwingyController {
                 } catch (CustomException e1) {
                     System.out.println("Persistance gone wrong");
                 }
-                guiView.mapCells[_hero.getYCoord()][_hero.getXCoord()].setIcon(null);
-                guiView.mapCells[_enemy.getYCoord()][_enemy.getXCoord()].setIcon(null);
                 System.exit(0);
             }
         });
@@ -535,7 +559,7 @@ public class SwingyController {
         guiView.eastButton.addActionListener(buttonAction);
         guiView.westButton.addActionListener(buttonAction);
         guiView.cliButton.addActionListener(buttonAction);
-        guiView.newGameButton.addActionListener(buttonAction);
+        // guiView.newGameButton.addActionListener(buttonAction);
     }
 
     public void guiEnemyEncounter() {
@@ -554,10 +578,6 @@ public class SwingyController {
                 guiEnemyEncounter();
             }
         }
-        // System.out.println("Hero X: " + _hero.getXCoord());
-        // System.out.println("Hero Y: " + _hero.getYCoord());
-        // System.out.println("Enemy X: " + _enemy.getXCoord());
-        // System.out.println("Enemy Y: " + _enemy.getYCoord());
     }
 
     public void guiFight() {
@@ -575,6 +595,7 @@ public class SwingyController {
                 System.out.println("Nothing is as beatiful as a dead enemy");
                 _enemy.setXCoord(-1);
                 _enemy.setYCoord(-1);
+                pers.removePersistenceFile("enemy");
                 JOptionPane.showMessageDialog(null, "The enemy is Dead, Proceed with the Game", "SUCCESS", JOptionPane.PLAIN_MESSAGE);
                 guiView.mapCells[_hero.getYCoord()][_hero.getXCoord()].setIcon(_hero.getImageIcon());
             } else {
@@ -586,6 +607,7 @@ public class SwingyController {
                 System.out.println("The enemy killed you. Mission failed");
                 _hero.setXCoord(-1);
                 _hero.setYCoord(-1);
+                pers.removePersistenceFile("enemy");
                 guiView.mapCells[_enemy.getYCoord()][_enemy.getXCoord()].setIcon(_enemy.getImage());
                 JOptionPane.showMessageDialog(null, "The enemy has killed you, Mission Failed!!", "FAILURE", JOptionPane.PLAIN_MESSAGE);
                 guiView.toggleGuiView("Off");
@@ -594,12 +616,19 @@ public class SwingyController {
                 fightTurn = 0;
             }
         }
+        pers.removePersistenceFile("enemy");
     }
 
     public void guiRunAway() {
-        _hero.restorePrePos();
-        guiView.mapCells[_hero.getYCoord()][_hero.getXCoord()].setIcon(_hero.getImageIcon());
-        guiView.mapCells[_enemy.getYCoord()][_enemy.getXCoord()].setIcon(_enemy.getImage());
+        int success = rand.nextInt(10);
+        if (success > 5) {
+            _hero.restorePrePos();
+            guiView.mapCells[_hero.getYCoord()][_hero.getXCoord()].setIcon(_hero.getImageIcon());
+            guiView.mapCells[_enemy.getYCoord()][_enemy.getXCoord()].setIcon(_enemy.getImage());
+        } else {
+            JOptionPane.showMessageDialog(null, "Sorry, You have to Fight!!", "CANNOT RUN AWAY", JOptionPane.PLAIN_MESSAGE);
+            guiFight();
+        }
     }
 
     // general
@@ -614,6 +643,17 @@ public class SwingyController {
 
     public int getMapSize(int level) {
         return (level - 1) * 5 + 10 - (level % 2);
+    }
+
+    public void setUpValidator() {
+        ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
+        validator = factory.getValidator();
+    }
+
+    public Set<ConstraintViolation<Hero>> validateHeroCredentials(Hero _hero) {
+        Set<ConstraintViolation<Hero>> errors = validator.validate(_hero);
+        
+        return errors;
     }
 
     public class ButtonControl implements ActionListener {

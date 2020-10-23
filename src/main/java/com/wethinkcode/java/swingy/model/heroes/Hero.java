@@ -3,6 +3,7 @@ package com.wethinkcode.java.swingy.model.heroes;
 import javax.swing.ImageIcon;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
 public class Hero {
@@ -11,6 +12,7 @@ public class Hero {
     private int _heroId;
 
     @NotNull(message = "Hero Name can not be a null value.")
+    @NotEmpty(message = "Hero Name can not be an empty value.")
     private String _name;
 
     @NotNull(message = "Hero type can not be a null value.")
